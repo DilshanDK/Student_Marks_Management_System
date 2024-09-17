@@ -16,6 +16,7 @@ if ($conn->connect_error) {
 // Retrieve and sanitize form data
 $name = $_POST['name'];
 $index_no = $_POST['index_no'];
+$email = $_POST['email'];
 $department = $_POST['department'];
 $registered_year = $_POST['registered_year'];
 $password = $_POST['password'];
@@ -24,8 +25,8 @@ $password = $_POST['password'];
 $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
 // Prepare and bind
-$stmt = $conn->prepare("INSERT INTO `students`(`sName`, `indexNo`, `department`, `year`, `pass`) VALUES (?, ?, ?, ?, ?)");
-$stmt->bind_param("sssss", $name, $index_no, $department, $registered_year, $hashed_password);
+$stmt = $conn->prepare("INSERT INTO `students`(`sName`, `indexNo`,`email`, `department`, `year`, `pass`) VALUES (?, ?, ?, ?, ?,?)");
+$stmt->bind_param("ssssss", $name, $index_no,$email, $department, $registered_year, $hashed_password);
 
 // Execute the statement
 if ($stmt->execute()) {

@@ -134,6 +134,9 @@
                 <label for="studentIndexNo">Index Number:</label>
                 <input type="text" id="studentIndexNo" name="index_no" required>
 
+                <label for="studentEmail">Email:</label>
+                <input type="email" id="studentEmail" name="email" required>
+
                 <label for="studentDepartment">Department:</label>
                 <select id="studentDepartment" name="department" required>
                     <option value="">Select Department</option>

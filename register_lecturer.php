@@ -1,3 +1,5 @@
+<script src="sweetalert2.all.min.js"></script>
+
 <?php
 // Database configuration
 $servername = "localhost";
@@ -29,6 +31,12 @@ $stmt->bind_param("sssss", $name, $email, $department, $subject, $hashed_passwor
 
 // Execute the statement
 if ($stmt->execute()) {
+    echo "<script>Swal.fire({
+  title: 'Good job!',
+  text: 'You clicked the button!',
+  icon: 'success'
+});</script>";
+
     echo "Registration successful!";
 } else {
     echo "Error: " . $stmt->error;
