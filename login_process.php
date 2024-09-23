@@ -1,5 +1,3 @@
-
-
 <?php
 // Start session
 session_start();
@@ -36,11 +34,16 @@ if ($userType === 'student') {
     $student = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($student) {
-        // Set session for logged-in student
-        $_SESSION['user_id'] = $student['indexNo'];
-        $_SESSION['user_type'] = 'student';
-        header('Location: student_dashboard.php');  // Redirect to student's page
-        exit();
+        // Check the hashed password
+        if (password_verify($password, $student['pass'])) {
+            // Set session for logged-in student
+            $_SESSION['user_id'] = $student['indexNo'];
+            $_SESSION['user_type'] = 'student';
+            header('Location: student_dashboard.php');  // Redirect to student's page
+            exit();
+        } else {
+            echo "Invalid password.";
+        }
     } else {
         echo "Invalid email or index number.";
     }
@@ -51,13 +54,21 @@ if ($userType === 'student') {
     $stmt->execute(['username' => $username]);
     $lecturer = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if ($lecturer && password_verify($password, $lecturer['password'])) {
-        // Set session for logged-in lecturer
-        $_SESSION['user_id'] = $lecturer['id'];
-        $_SESSION['user_type'] = 'lecturer';
-        header('Location: lecturer_dashboard.php');  // Redirect to lecturer's page
-        exit();
+    if ($lecturer) {
+        // Check the hashed password
+        if (password_verify($password, $lecturer['password'])) {
+            // Set session for logged-in lecturer
+            $_SESSION['user_id'] = $lecturer['id'];
+            $_SESSION['user_type'] = 'lecturer';
+            header('Location: lecturer_dashboard.php');  // Redirect to lecturer's page
+            exit();
+        } else {
+            echo "Invalid password.";
+        }
     } else {
         echo "Invalid email or password.";
     }
+} else {
+    echo "Invalid user type.";
 }
+
