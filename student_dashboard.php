@@ -1,4 +1,4 @@
 <?php
 
 
-echo"dk";
+echo"student dashboardh";
