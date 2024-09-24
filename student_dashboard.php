@@ -1,4 +1,4 @@
 <?php
 
 
-echo"student dashboardh";
+echo"student dashboard";
