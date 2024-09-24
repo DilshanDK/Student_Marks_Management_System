@@ -1,1 +1,1 @@
-<?php echo"jk";
+<?php echo"lecture dashboard";
