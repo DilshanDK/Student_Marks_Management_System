@@ -2,72 +2,73 @@
 // Start session
 session_start();
 
-// Database connection (assuming you're using MySQL)
-$host = 'localhost';
-$db = 'student_marks_ms';
-$user = 'root';
-$pass = '';
-
-// Data Source Name (DSN)
-$dsn = "mysql:host=$host;dbname=$db";
 
 try {
-    // Create a PDO instance
-    $pdo = new PDO($dsn, $user, $pass);
-    // Set PDO error mode to exception
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch (PDOException $e) {
+    require "database_connection.php";
+} catch (Exception $e) {
     // Handle connection error
     die("Connection failed: " . $e->getMessage());
 }
+
 
 // Get form data
 $userType = $_POST['userType'];
 $username = $_POST['username'];
 $password = $_POST['password'];
 
-// Check if student or lecturer
 if ($userType === 'student') {
-    // For students: Validate email or index number
-    $stmt = $pdo->prepare("SELECT * FROM students WHERE email = :username OR indexNo = :username");
-    $stmt->execute(['username' => $username]);
-    $student = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if ($student) {
-        // Check the hashed password
-        if (password_verify($password, $student['pass'])) {
-            // Set session for logged-in student
-            $_SESSION['user_id'] = $student['indexNo'];
-            $_SESSION['user_type'] = 'student';
-            header('Location: student_dashboard.php');  // Redirect to student's page
-            exit();
+    try {
+        $sql = "SELECT * FROM student WHERE st_id = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("s", $username);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        if ($result->num_rows > 0) {
+            $row = $result->fetch_assoc();
+            if ($password == $row['st_pass']) {
+                $_SESSION['username'] = $username;
+                header("Location:student_dashboard.php");
+                exit();
+            } else {
+                echo "Invalid password.";
+            }
         } else {
-            echo "Invalid password.";
+            echo "Invalid index number or user type";
         }
-    } else {
-        echo "Invalid email or index number.";
+    } catch (Exception $e) {
+        echo "invalid student table";
     }
+
+
+
+
+
 
 } elseif ($userType === 'lecturer') {
-    // For lecturers: Validate email and hashed password
-    $stmt = $pdo->prepare("SELECT * FROM lecturers WHERE email = :username");
-    $stmt->execute(['username' => $username]);
-    $lecturer = $stmt->fetch(PDO::FETCH_ASSOC);
+    try {
+        $sql = "SELECT * FROM lecture WHERE lec_id = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("s", $username);
+        $stmt->execute();
+        $result = $stmt->get_result();
 
-    if ($lecturer) {
-        // Check the hashed password
-        if (password_verify($password, $lecturer['password'])) {
-            // Set session for logged-in lecturer
-            $_SESSION['user_id'] = $lecturer['id'];
-            $_SESSION['user_type'] = 'lecturer';
-            header('Location: lecturer_dashboard.php');  // Redirect to lecturer's page
-            exit();
+        if ($result->num_rows > 0) {
+            $row = $result->fetch_assoc();
+            if ($password == $row['lec_pass']) {
+                $_SESSION['username'] = $username;
+                header("Location:lecturer_dashboard.php");
+                exit();
+            } else {
+                echo "Invalid password.";
+            }
         } else {
-            echo "Invalid password.";
+            echo "Invalid index number or user type";
         }
-    } else {
-        echo "Invalid email or password.";
+    } catch (Exception) {
+        echo "invalid lecture table";
     }
+
 } else {
     echo "Invalid user type.";
 }

@@ -107,7 +107,7 @@
         <button type="submit">Login</button>
 
         <p style="text-align: center; margin-top: 10px;">
-          Don't have an account? <a href="register.php">Register</a>
+           <a href="foget_password.php">Forgot Password?</a>
         </p>
       </form>
     </div>

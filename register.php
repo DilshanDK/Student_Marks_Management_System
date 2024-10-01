@@ -158,26 +158,7 @@
             </form>
 
             <form id="lecturerForm" class="form-section" action="register_lecturer.php" method="post">
-                <label for="lecturerName">Name:</label>
-                <input type="text" id="lecturerName" name="name" required>
-
-                <label for="lecturerEmail">Email:</label>
-                <input type="email" id="lecturerEmail" name="email" required>
-
-                <label for="lecturerDepartment">Department:</label>
-                <select id="lecturerDepartment" name="department" required>
-                    <option value="">Select Department</option>
-                    <option value="hnda">HND Accounting</option>
-                    <option value="hndit">HND Information Technology</option>
-                    <option value="hndm">HND Marketing</option>
-                    <option value="hndba">HND Business Administration</option>
-                    <option value="hndthm">HND Tourism and Hospitality Management</option>
-                    <option value="hnde">HND English</option>
-                </select>
-
-                <label for="lecturerSubject">Subject:</label>
-                <input type="text" id="lecturerSubject" name="subject" required>
-
+                
                 <label for="lecturerPassword">Password:</label>
                 <input type="password" id="lecturerPassword" name="password" required>
 
