@@ -1,0 +1,240 @@
+/* General Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f4f4f9;
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
+
+a {
+    text-decoration: none;
+}
+
+h1,
+h2,
+h3 {
+    color: #333;
+}
+
+/* Header Styles */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #2c3e50;
+    color: #fff;
+    padding: 20px 40px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.header-left img {
+    height: 50px;
+    width: auto;
+}
+
+.header-title {
+    font-size: 1.8rem;
+    font-weight: 600;
+}
+
+.header-right {
+    display: flex;
+}
+
+
+.header-right .details p {
+    margin: 0;
+    padding: 5px;
+    color: #fff;
+}
+
+.header-right .group {
+    display: flex;
+    align-items: center;
+}
+
+.header-right .btn-logout {
+    padding: 10px 20px;
+    font-size: 0.9rem;
+    background-color: #e74c3c;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin-left: 50px;
+}
+
+.header-right .btn-logout:hover {
+    background-color: #c0392b;
+}
+
+/* Dashboard Styles */
+.dashboard {
+    margin: 40px auto;
+    max-width: 1200px;
+    padding: 0 20px;
+}
+
+.dashboard h2 {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+    color: #2c3e50;
+    text-align: center;
+}
+
+/* Table Styles */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    background-color: #fff;
+}
+
+thead th {
+    background-color: #34495e;
+    color: #fff;
+    text-align: left;
+    padding: 15px;
+}
+
+tbody tr:nth-child(odd) {
+    background-color: #ecf0f1;
+}
+
+tbody tr:nth-child(even) {
+    background-color: #fdfdfd;
+}
+
+tbody td {
+    padding: 15px;
+    text-align: center;
+}
+
+tbody td input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #bdc3c7;
+    border-radius: 4px;
+    background-color: #f7f7f7;
+    text-align: center;
+}
+
+.btn-update {
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    background-color: #2980b9;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.btn-update:hover {
+    background-color: #1b6f98;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+    .header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .header-title {
+        margin-top: 10px;
+        font-size: 1.5rem;
+    }
+
+    .dashboard {
+        padding: 0 10px;
+    }
+
+    table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+
+    thead th,
+    tbody td {
+        font-size: 0.9rem;
+        padding: 10px;
+    }
+
+    .btn-logout {
+        padding: 8px 15px;
+    }
+}
+/* Form container styling */
+.fil {
+    justify-content: space-between;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    padding: 10px;
+}
+
+/* Label styling */
+form label {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+    font-size: 16px;
+    margin-bottom: 8px;
+    color: #333;
+}
+
+/* Select dropdown styling */
+form select {
+    width: 250px;
+    padding: 8px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #fff;
+    margin-bottom: 15px;
+    transition: border 0.3s ease;
+}
+
+/* Hover and focus effects for the select dropdown */
+form select:hover, form select:focus {
+    border-color: #007bff;
+    outline: none;
+}
+
+/* Button styling */
+.btn {
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+/* Filter button styling */
+.btn-filter {
+    background-color: #007bff;
+    color: #fff;
+}
+
+.btn-filter:hover {
+    background-color: #0056b3;
+}
+
+.btn-filter:focus {
+    outline: none;
+    background-color: #00448f;
+}

@@ -13,8 +13,8 @@ try {
 
 // Get form data
 $userType = $_POST['userType'];
-$username = trim($_POST['username']);
-$password = trim($_POST['password']);
+$username = $_POST['username'];
+$password = $_POST['password'];
 
 if ($userType === 'student') {
 
@@ -39,6 +39,12 @@ if ($userType === 'student') {
     } catch (Exception $e) {
         echo "invalid student table";
     }
+
+
+
+
+
+
 } elseif ($userType === 'lecturer') {
     try {
         $sql = "SELECT * FROM lecture WHERE lec_id = ?";
@@ -51,6 +57,7 @@ if ($userType === 'student') {
             $row = $result->fetch_assoc();
             if ($password == $row['lec_pass']) {
                 $_SESSION['username'] = $username;
+                $_SESSION['lecName'] = $row['lec_name'];
                 header("Location:lecturer_dashboard.php");
                 exit();
             } else {
@@ -62,6 +69,8 @@ if ($userType === 'student') {
     } catch (Exception) {
         echo "invalid lecture table";
     }
+
 } else {
     echo "Invalid user type.";
 }
+

@@ -1,67 +1,84 @@
 <?php
 session_start();
+
+if (!isset($_SESSION['username'])) {
+    header("Location: index1.php"); // Redirect to login page if not logged in
+    exit;
+}
+
+
 try {
     require "database_connection.php";
 } catch (Exception $e) {
     die("Connection failed: " . $e->getMessage());
 }
 
-$selectedYear = isset($_POST['year']) ? $_POST['year'] : date("Y");
+$selectedYear = isset($_POST['year']) ? $_POST['year'] : '';
 $searchTerm = isset($_POST['search']) ? trim($_POST['search']) : '';
 
-$sqll = "SELECT `sub_id` FROM `subject_lecture` WHERE `lec_id`='{$_SESSION['username']}'";
-$resultl = $conn->query($sqll);
-$rowl = $resultl->fetch_assoc();
-$sub = $rowl['sub_id'];
+// Extract lecture name and subject
+$sqlSubId = "SELECT `sub_id` FROM `subject_lecture` WHERE `lec_id`='{$_SESSION['username']}'";
+$resultSubId = $conn->query($sqlSubId);
+$subId = $resultSubId->fetch_assoc()['sub_id'];
+
+
+
+$sqlLecName = "SELECT `lec_name` FROM `lecture` WHERE `lec_id`='{$_SESSION['username']}'";
+$resultLecName = $conn->query($sqlLecName);
+$lecName = $resultLecName->fetch_assoc()['lec_name'];
 
 // Fetch subject name
-$sqlSubject = "SELECT `sub_name` FROM `subject` WHERE `sub_id`='$sub'";
+$sqlSubject = "SELECT `sub_name` FROM `subject` WHERE `sub_id`='$subId'";
 $resultSubject = $conn->query($sqlSubject);
 $subjectName = $resultSubject->fetch_assoc()['sub_name'];
 
+// Logout logic
+if (isset($_POST['logout'])) {
+    session_destroy();
+    header("Location: index1.php"); // Redirect to login page
+    exit;
+}
+
+// Update marks
 if (isset($_POST['update'])) {
-    $marksAttempt1 = $_POST['mark_1'];
-    $marksAttempt2 = $_POST['mark_2'];
-    $marksAttempt3 = $_POST['mark_3'];
-    $studentId = $_POST['student_id'];
 
-    $updateSql = "UPDATE `attempt_marks` 
-                  SET `attempt_1`='$marksAttempt1', 
-                      `attempt_2`='$marksAttempt2', 
-                      `attempt_3`='$marksAttempt3' 
-                  WHERE `st_id`='$studentId' 
-                  AND `sub_id`='$sub' 
-                  AND `year`='$selectedYear'";
-    
-    if ($conn->query($updateSql) === TRUE) {
-        echo "<script>
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Updated!',
-                    text: 'Marks updated successfully.',
-                    showConfirmButton: false,
-                    timer: 1500
-                });
-              </script>";
-    } else {
-        echo "<script>
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Not Updated!',
-                    text: 'Failed to update marks.',
-                    showConfirmButton: false,
-                    timer: 1500
-                });
-              </script>";
+    if (($_POST['mark_1'] >= 0 && !empty($_POST['mark_1'])) && ($_POST['mark_2'] >= 0 && !empty($_POST['mark_2'])) && ($_POST['mark_3'] >= 0 && !empty($_POST['mark_3']))) {
+        $marksAttempt1 = $_POST['mark_1'];
+        $marksAttempt2 = $_POST['mark_2'];
+        $marksAttempt3 = $_POST['mark_3'];
+        $studentId = $_POST['student_id'];
+
+        $updateSql = "UPDATE `attempt_marks` 
+                      SET `attempt_1`='$marksAttempt1', 
+                          `attempt_2`='$marksAttempt2', 
+                          `attempt_3`='$marksAttempt3' 
+                      WHERE `st_id`='$studentId' 
+                      AND `sub_id`='$subId'";
+
+        if ($conn->query($updateSql) === TRUE) {
+            echo "<script>
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Updated!',
+                        text: 'Marks updated successfully.',
+                        showConfirmButton: false,
+                        timer: 1500
+                    });
+                  </script>";
+        } else {
+            echo "<script>
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Not Updated!',
+                        text: 'Failed to update marks.',
+                        showConfirmButton: false,
+                        timer: 1500
+                    });
+                  </script>";
+        }
     }
-}
 
-// Search or fetch all students
-$sql = "SELECT `st_id`, `st_name` FROM `student` WHERE SUBSTRING(`st_id`, 8, 4) = '$selectedYear'";
-if ($searchTerm) {
-    $sql .= " AND (`st_id` LIKE '%$searchTerm%' OR `st_name` LIKE '%$searchTerm%')";
 }
-$result = $conn->query($sql);
 ?>
 
 <!DOCTYPE html>
@@ -70,268 +87,130 @@ $result = $conn->query($sql);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css" type="text/css">
     <title>Lecture Dashboard</title>
-    <!-- SweetAlert -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/2.1.2/sweetalert.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/2.1.2/sweetalert.min.js"></script>
-    <!-- Google Fonts (for improved typography) -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-    <style>
-       body {
-            font-family: 'Poppins', sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f9f9f9;
-            color: #333;
-            transition: background-color 0.3s ease-in-out;
-        }
 
-        .dashboard {
-            max-width: 1200px;
-            margin: 40px auto;
-            background-color: #fff;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
-        }
-
-        h1 {
-            font-size: 2rem;
-            color: #34495e;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        h2 {
-            font-size: 1.5rem;
-            color: #2980b9;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        form {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px;
-            background-color: #f5f5f5;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-            gap: 20px;
-        }
-
-        form div {
-            flex: 1;
-        }
-
-        label {
-            font-weight: 500;
-            font-size: 1rem;
-            color: #555;
-            display: block;
-            margin-bottom: 8px;
-        }
-
-        select, input[type="text"] {
-            width: 100%;
-            padding: 10px;
-            font-size: 1rem;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
-            transition: border-color 0.3s ease-in-out;
-        }
-
-        select:focus, input[type="text"]:focus {
-            border-color: #2980b9;
-            box-shadow: 0 0 5px rgba(41, 128, 185, 0.3);
-        }
-
-        button {
-            background-color: #27ae60;
-            color: white;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 6px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.3s ease-in-out;
-            font-size: 1rem;
-            width: 100%;
-        }
-
-        button:hover {
-            background-color: #2ecc71;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
-            border-radius: 10px;
-            overflow: hidden;
-        }
-
-        th, td {
-            text-align: left;
-            padding: 15px;
-            border-bottom: 1px solid #ddd;
-            font-size: 1rem;
-        }
-
-        th {
-            background-color: #ecf0f1;
-            color: #34495e;
-            text-transform: uppercase;
-            font-weight: 600;
-        }
-
-        tr:hover {
-            background-color: #f1f1f1;
-            transition: background-color 0.2s;
-        }
-
-        td input[type="text"] {
-            width: 80px;
-            padding: 8px;
-            text-align: center;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
-        }
-
-        td:last-child {
-            text-align: center;
-        }
-
-        tbody {
-            display: block;
-            max-height: 400px;
-            overflow-y: auto;
-        }
-
-        thead, tbody tr {
-            display: table;
-            width: 100%;
-            table-layout: fixed;
-        }
-
-        @media (max-width: 768px) {
-            form {
-                flex-direction: column;
-                gap: 20px;
-            }
-
-            button {
-                width: 100%;
-            }
-
-            table, thead, tbody tr {
-                display: block;
-            }
-
-            tbody tr {
-                margin-bottom: 20px;
-            }
-
-            tbody tr td {
-                display: block;
-                width: 100%;
-                padding: 10px;
-            }
-
-            tbody tr td input[type="text"] {
-                width: 100%;
-            }
-
-            tbody tr td:last-child {
-                text-align: right;
-            }
-        }
-    </style>
 </head>
 
 <body>
-    <div class="dashboard">
-        <h1>Lecture Dashboard</h1>
-        <h2><?php echo htmlspecialchars($subjectName); ?></h2>
 
-        <!-- Year and Search Form -->
+    <!-- Header Section -->
+    <div class="header">
+        <div class="header-left">
+            <img src="sliate.jpeg" alt="Logo">
+        </div>
+        <div class="header-title">Sliate Marks Dashboard</div>
+        <div class="header-right">
+            <div class="details">
+                <p>Lecture: <?php echo $lecName; ?></p>
+                <p>Subject: <?php echo htmlspecialchars($subjectName); ?></p>
+            </div>
+            <form class="group" method="POST" action="">
+                <button class="btn btn-logout" name="logout" type="submit">Logout</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="dashboard">
+
         <form method="POST" action="">
             <div>
-                <label for="year">Select Year:</label>
-                <select name="year" id="year">
+                <label for="year">Select Register Year</label>
+                <select style="width: 250px;" name="year" id="year">
+                    <option value="">All Years</option>
                     <?php
-                    for ($i = 2020; $i <= 2030; $i++) {
-                        $selected = ($i == $selectedYear) ? "selected" : "";
-                        echo "<option value='$i' $selected>$i</option>";
+                    for ($year = 2020; $year <= 2040; $year++) {
+                        $selected = ($selectedYear == $year) ? 'selected' : '';
+                        echo "<option value='$year' $selected>$year</option>";
                     }
                     ?>
                 </select>
             </div>
+
             <div>
-                <label for="search">Search Student (ID/Name):</label>
-                <input type="text" name="search" id="search" value="<?php echo htmlspecialchars($searchTerm); ?>" placeholder="Enter Student ID or Name">
+                <label for="search">Search Student</label>
+                <input type="text" style="padding:10px 30px;" name="search" id="search"
+                    value="<?php echo htmlspecialchars($searchTerm); ?>" placeholder="Student Name or ID">
             </div>
-            <div>
-                <button type="submit">Filter</button>
-            </div>
+
+            <button type="submit" class="btn btn-filter">Filter</button>
         </form>
 
+        <!-- Display Students and Marks -->
         <table>
             <thead>
                 <tr>
-                    <th>Student ID</th>
-                    <th>Student Name</th>
-                    <th>Attempt 1</th>
-                    <th>Attempt 2</th>
-                    <th>Attempt 3</th>
-                    <th>Actions</th>
+                    <th width="150">Student ID</th>
+                    <th width="170">Student Name</th>
+                    <th>First Attempt Year</th>
+                    <th>First Attempt Mark</th>
+                    <th>Second Attempt Year</th>
+                    <th>Second Attempt Mark</th>
+                    <th>Third Attempt Year</th>
+                    <th>Third Attempt Mark</th>
+                    <th width="115">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 <?php
-                if ($result->num_rows > 0) {
-                    while ($rows = $result->fetch_assoc()) {
-                        $id = strtoupper($rows['st_id']);
-                        $name = ucfirst($rows['st_name']);
-                        
-                        // Fetch marks for all attempts
-                        $sqlMarks = "SELECT `attempt_1`, `attempt_2`, `attempt_3` FROM `attempt_marks` 
-                                     WHERE `st_id`='{$rows['st_id']}' 
-                                     AND `sub_id`='$sub' 
-                                     ";
-                        $resultMarks = $conn->query($sqlMarks);
-                        $marks = $resultMarks->fetch_assoc();
-                        
-                        $mark1 = $marks ? $marks['attempt_1'] : 'AB';
-                        $mark2 = $marks ? $marks['attempt_2'] : 'AB';
-                        $mark3 = $marks ? $marks['attempt_3'] : 'AB';
+                // Fetch students and filter by year (if selected) or search term
+                $sqlStudents = "SELECT `st_id`, `st_name` FROM `student` WHERE 1";
 
-                        echo "<tr>
-                                <form method='POST' action=''>
-                                    <td>$id</td>
-                                    <td>$name</td>
-                                    <td><input type='text' name='mark_1' value='$mark1' size='5'></td>
-                                    <td><input type='text' name='mark_2' value='$mark2' size='5'></td>
-                                    <td><input type='text' name='mark_3' value='$mark3' size='5'></td>
-                                    <td>
-                                        <input type='hidden' name='student_id' value='$id'>
-                                        <button type='submit' name='update'>Update</button>
-                                    </td>
-                                </form>
-                             </tr>";
-                    }
-                } else {
-                    echo "<tr><td colspan='6' style='text-align:center;'>No data found</td></tr>";
+                if ($selectedYear) {
+                    $sqlStudents .= " AND `st_reg_year` = '$selectedYear'";
                 }
 
-                $conn->close();
+                if ($searchTerm) {
+                    $sqlStudents .= " AND (`st_id` LIKE '%$searchTerm%' OR `st_name` LIKE '%$searchTerm%')";
+                }
+
+                $resultStudents = $conn->query($sqlStudents);
+
+                if ($resultStudents->num_rows > 0) {
+                    while ($studentRow = $resultStudents->fetch_assoc()) {
+                        $id = strtoupper($studentRow['st_id']);
+                        $name = ucfirst($studentRow['st_name']);
+                        $sqlMarks = "SELECT `attempt_1`, `fir_year`, `attempt_2`, `sec_year`, `attempt_3`, `thir_year` 
+                                     FROM `attempt_marks` 
+                                     WHERE `st_id`='{$studentRow['st_id']}' 
+                                     AND `sub_id`='$subId'";
+                        $resultMark = $conn->query($sqlMarks);
+
+                        while ($marksRow = $resultMark->fetch_assoc()) {
+                            $mark1 = $marksRow ? $marksRow['attempt_1'] : 'AB';
+                            $year1 = $marksRow ? $marksRow['fir_year'] : '-';
+                            $mark2 = $marksRow ? $marksRow['attempt_2'] : 'AB';
+                            $year2 = $marksRow ? $marksRow['sec_year'] : '-';
+                            $mark3 = $marksRow ? $marksRow['attempt_3'] : 'AB';
+                            $year3 = $marksRow ? $marksRow['thir_year'] : '-';
+
+                            echo "<tr>
+                                <form method='POST' action=''>
+                                    <td width='150'>$id</td>
+                                    <td width='170' style='text-align:left;'>$name</td>
+                                    <td>$year1</td>
+                                    <td><input type='text' name='mark_1' value='$mark1'></td>
+                                    <td>$year2</td>
+                                    <td><input type='text' name='mark_2' value='$mark2'></td>
+                                    <td>$year3</td>
+                                    <td><input type='text' name='mark_3' value='$mark3'></td>
+                                    <td>
+                                        <input type='hidden' name='student_id' value='$id'>
+                                        <button type='submit' name='update' class='btn-update'>Update</button>
+                                    </td>
+                                </form>
+                              </tr>";
+                        }
+                    }
+                } else {
+                    echo "<tr><td colspan='9' style='text-align:center;'>No data found</td></tr>";
+                }
                 ?>
             </tbody>
         </table>
     </div>
+
 </body>
 
 </html>

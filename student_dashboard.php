@@ -7,37 +7,48 @@ try {
     die("Connection failed: " . $e->getMessage());
 }
 
-// Handle the form submission
-$selectedYear = isset($_POST['registered_year']) ? $_POST['registered_year'] : date("Y");
-$selectedAttempt = isset($_POST['attempt']) ? $_POST['attempt'] : 1;
-$selectedSemester = isset($_POST['semester']) ? $_POST['semester'] : 1;
+// Ensure the user is logged in
+$studentId = $_SESSION['username'];
 
-// Fetch student data to get department ID
-$username = $_SESSION['username'];
-$sql = "SELECT * FROM student WHERE st_id = ?";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("s", $username);
-$stmt->execute();
-$result = $stmt->get_result();
-$department_id = substr($username, 4, 2);
-echo $department_id;
+// Fetch the student details
+$stmtStudent = $conn->prepare("SELECT `st_name` FROM `student` WHERE `st_id` = ?");
+$stmtStudent->bind_param("s", $studentId);
+$stmtStudent->execute();
+$resultStudent = $stmtStudent->get_result();
+if ($resultStudent->num_rows == 0) {
+    die("Student not found.");
+}
+$student = $resultStudent->fetch_assoc();
 
+// Get selected period, default to 0 (All Semesters)
+$selectedPeriod = isset($_POST['period']) ? (int) $_POST['period'] : 0;
 
-// Fetch available semesters for the department
-$semesters_sql = "SELECT semester_id, semester_name FROM semesters WHERE department_id = ?";
-$stmt = $conn->prepare($semesters_sql);
-$stmt->bind_param("i", $department_id);
-$stmt->execute();
-$semesters_result = $stmt->get_result();
+// Fetch all subjects based on selected period
+if ($selectedPeriod == 0) {
+    // If "All Semesters" is selected, don't filter by `per_id`
+    $sqlAllSub = "SELECT sb.sub_id, sb.per_id FROM `student` st
+                    JOIN `subject` sb ON sb.dep_id = st.st_dep
+                    WHERE st.st_id = ?";
+    $stmtAllSub = $conn->prepare($sqlAllSub);
+    $stmtAllSub->bind_param("s", $studentId);
+} else {
+    // Filter by specific period
+    $sqlAllSub = "SELECT sb.sub_id, sb.per_id FROM `student` st
+                    JOIN `subject` sb ON sb.dep_id = st.st_dep
+                    WHERE st.st_id = ? AND sb.per_id = ?";
+    $stmtAllSub = $conn->prepare($sqlAllSub);
+    $stmtAllSub->bind_param("si", $studentId, $selectedPeriod); // Bind period as integer
+}
 
-// Fetch student data from database based on filters
-$sql = "SELECT st_id, sub_id, mark FROM attempt_marks 
-        WHERE year = ? AND attempt = ? AND st_id = ?";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("sis", $selectedYear, $selectedAttempt, $username);
-$stmt->execute();
-$result = $stmt->get_result();
+$stmtAllSub->execute();
+$resultAllSub = $stmtAllSub->get_result();
 
+// Logout logic
+if (isset($_POST['logout'])) {
+    session_destroy();
+    header("Location: index1.php"); // Redirect to login page
+    exit;
+}
 ?>
 
 <!DOCTYPE html>
@@ -46,145 +57,122 @@ $result = $stmt->get_result();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="stylesSt.css" type="text/css">
     <title>Student Dashboard</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f4f4;
-        }
-        .dashboard {
-            width: 80%;
-            margin: 50px auto;
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-        h1 {
-            text-align: center;
-        }
-        form {
-            display: flex;
-            justify-content: flex-start;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        th, td {
-            text-align: left;
-            padding: 10px;
-            border-bottom: 1px solid #ddd;
-        }
-        th {
-            background-color: #f8f8f8;
-            font-weight: bold;
-        }
-        tr:hover {
-            background-color: #f1f1f1;
-        }
-        .borderless td {
-            border: none;
-        }
-        select {
-            padding: 5px;
-            font-size: 16px;
-        }
-        button {
-            padding: 5px 20px;
-            font-size: 16px;
-            font-weight: bold;
-            background-color: black;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-    </style>
 </head>
 
 <body>
-    <div class="dashboard">
-        <h1>Student Dashboard</h1>
 
-        <!-- Year and Semester Selection Form -->
-        <form method="POST" action="">
+    <!-- Header Section -->
+    <div class="header">
+        <div class="header-left">
+            <img src="sliate.jpeg" alt="Logo">
+        </div>
+        <div class="header-title">Sliate Marks Dashboard</div>
+        <div class="header-right">
+            <div class="details">
+                <p>Name: <?php echo ucfirst(htmlspecialchars($student['st_name'])); ?></p>
+                <p>Index: <?php echo htmlspecialchars($studentId); ?></p>
+            </div>
+            <form class="group" method="POST" action="">
+                <button class="btn btn-logout" name="logout" type="submit">Logout</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Dashboard Section -->
+    <div class="dashboard">
+        <h2>Marks Overview</h2>
+        <form class="fil" method="POST" action="">
             <div>
-                <label for="registered_year">Select Registered Year:</label>
-                <select name="registered_year" id="registered_year">
-                    <?php
-                    for ($i = 2020; $i <= 2030; $i++) {
-                        $selected = ($i == $selectedYear) ? "selected" : "";
-                        echo "<option value='$i' $selected>$i</option>";
-                    }
-                    ?>
+                <label for="period">Select Semester:</label>
+                <select name="period" id="period">
+                    <option value="0" <?php echo ($selectedPeriod == 0) ? 'selected' : ''; ?>>All Semesters</option>
+                    <option value="1" <?php echo ($selectedPeriod == 1) ? 'selected' : ''; ?>>1st Year First Semester</option>
+                    <option value="2" <?php echo ($selectedPeriod == 2) ? 'selected' : ''; ?>>1st Year Second Semester</option>
+                    <option value="3" <?php echo ($selectedPeriod == 3) ? 'selected' : ''; ?>>2nd Year First Semester</option>
+                    <option value="4" <?php echo ($selectedPeriod == 4) ? 'selected' : ''; ?>>2nd Year Second Semester</option>
+                    <option value="5" <?php echo ($selectedPeriod == 5) ? 'selected' : ''; ?>>3rd Year First Semester</option>
+                    <option value="6" <?php echo ($selectedPeriod == 6) ? 'selected' : ''; ?>>3rd Year Second Semester</option>
+                    <option value="7" <?php echo ($selectedPeriod == 7) ? 'selected' : ''; ?>>4th Year First Semester</option>
+                    <option value="8" <?php echo ($selectedPeriod == 8) ? 'selected' : ''; ?>>4th Year Second Semester</option>
                 </select>
             </div>
-            <div>
-                <label for="attempt">Select Attempt:</label>
-                <select name="attempt" id="attempt">
-                    <option value="1" <?php if ($selectedAttempt == 1) echo "selected"; ?>>1</option>
-                    <option value="2" <?php if ($selectedAttempt == 2) echo "selected"; ?>>2</option>
-                    <option value="3" <?php if ($selectedAttempt == 3) echo "selected"; ?>>3</option>
-                </select>
-            </div>
-            <div>
-                <label for="semester">Select Semester:</label>
-                <select name="semester" id="semester">
-                    <?php while ($semester = $semesters_result->fetch_assoc()) : ?>
-                        <option value="<?php echo $semester['semester_id']; ?>" <?php if ($semester['semester_id'] == $selectedSemester) echo "selected"; ?>>
-                            <?php echo $semester['semester_name']; ?>
-                        </option>
-                    <?php endwhile; ?>
-                </select>
-            </div>
-            <div>
-                <button type="submit">Filter</button>
-            </div>
+            <button type="submit" class="btn btn-filter">Filter</button>
         </form>
 
-        <table class="borderless">
-            <tr>
-                <th>Student ID</th>
+        <table>
+            <thead>
+                <tr>
+                    <th>Subject</th>
+                    <th>Subject ID</th>
+                    <th>First Attempt Year</th>
+                    <th>First Attempt Mark</th>
+                    <th>Second Attempt Year</th>
+                    <th>Second Attempt Mark</th>
+                    <th>Third Attempt Year</th>
+                    <th>Third Attempt Mark</th>
+                </tr>
+            </thead>
+            <tbody>
                 <?php
-                $sql = "SELECT sub_name FROM subject";
-                $subResult = $conn->query($sql);
-                while ($subRow = $subResult->fetch_assoc()) {
-                    $subName = $subRow['sub_name'];
-                    echo "<th style='text-align:center;'>$subName</th>";
-                }
-                ?>
-                <th style='text-align:center;'>Assignment Marks</th>
-            </tr>
+                if ($resultAllSub->num_rows > 0):
+                    while ($allSubRow = $resultAllSub->fetch_assoc()):
+                        $sub = $allSubRow['sub_id'];
 
-            <?php
-            if ($result->num_rows > 0) {
-                while ($row = $result->fetch_assoc()) {
-                    $id = strtoupper($row['st_id']);
-                    $mark = ucfirst($row['mark']);
-                    $sub = $row['sub_id'];
-                    $sql = "SELECT sub_name FROM subject WHERE sub_id='$sub'";
-                    $subResult = $conn->query($sql);
-                    while ($subRow = $subResult->fetch_assoc()) {
-                        echo "<tr>
-                            <td>$id</td>
-                            <td style='text-align:center;'>$mark</td>
-                        </tr>";
-                    }
-                }
-            } else {
-                echo "<tr><td colspan='7' style='text-align:center;'>No data found</td></tr>";
-            }
+                        // Fetch marks for each subject
+                        $sqlMarks = "SELECT 
+                                        s.sub_name, s.sub_id,  
+                                        am.attempt_1, am.fir_year, 
+                                        am.attempt_2, am.sec_year, 
+                                        am.attempt_3, am.thir_year
+                                    FROM `attempt_marks` am
+                                    JOIN `subject` s ON s.sub_id = am.sub_id
+                                    WHERE am.st_id = ? AND s.sub_id = ?";
+                        
+                        if ($selectedPeriod != 0) {
+                            $sqlMarks .= " AND s.per_id = ?";
+                        }
 
-            $stmt->close();
-            $conn->close();
-            ?>
+                        $stmtMarks = $conn->prepare($sqlMarks);
+
+                        if ($selectedPeriod != 0) {
+                            $stmtMarks->bind_param("sii", $studentId, $sub, $selectedPeriod);
+                        } else {
+                            $stmtMarks->bind_param("si", $studentId, $sub);
+                        }
+
+                        $stmtMarks->execute();
+                        $resultMarks = $stmtMarks->get_result();
+
+                        if ($resultMarks->num_rows > 0):
+                            while ($marksRow = $resultMarks->fetch_assoc()): ?>
+                                <tr>
+                                    <td><?php echo htmlspecialchars($marksRow['sub_name']); ?></td>
+                                    <td><?php echo htmlspecialchars($marksRow['sub_id']); ?></td>
+                                    <td><?php echo htmlspecialchars($marksRow['fir_year']) ?: '-'; ?></td>
+                                    <td><?php echo htmlspecialchars($marksRow['attempt_1']) ?: 'AB'; ?></td>
+                                    <td><?php echo htmlspecialchars($marksRow['sec_year']) ?: '-'; ?></td>
+                                    <td><?php echo htmlspecialchars($marksRow['attempt_2']) ?: 'AB'; ?></td>
+                                    <td><?php echo htmlspecialchars($marksRow['thir_year']) ?: '-'; ?></td>
+                                    <td><?php echo htmlspecialchars($marksRow['attempt_3']) ?: 'AB'; ?></td>
+                                </tr>
+                            <?php endwhile;
+                        else: ?>
+                            <tr>
+                                <td colspan="8"><?php echo '-'; ?></td>
+                            </tr>
+                        <?php endif;
+                    endwhile;
+                else: ?>
+                    <tr>
+                        <td colspan="8">No subjects found.</td>
+                    </tr>
+                <?php endif; ?>
+            </tbody>
         </table>
     </div>
-</body>
 
+</body>
 </html>
