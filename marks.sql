@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 06, 2024 at 04:36 PM
+-- Generation Time: Oct 29, 2024 at 07:51 PM
 -- Server version: 10.4.27-MariaDB
 -- PHP Version: 8.2.0
 
@@ -146,28 +146,6 @@ INSERT INTO `period` (`period_id`, `period_sem`, `period_year`) VALUES
 -- --------------------------------------------------------
 
 --
--- Table structure for table `result`
---
-
-CREATE TABLE `result` (
-  `st_id` varchar(100) NOT NULL,
-  `sub_id` int(11) NOT NULL,
-  `acd_year` year(4) DEFAULT NULL,
-  `attempt_1` varchar(5) NOT NULL,
-  `attempt_2` varchar(5) DEFAULT NULL,
-  `attempt_3` varchar(5) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `result`
---
-
-INSERT INTO `result` (`st_id`, `sub_id`, `acd_year`, `attempt_1`, `attempt_2`, `attempt_3`) VALUES
-('kan-it-2022-f-0001', 1012, 2022, '35', '', '');
-
--- --------------------------------------------------------
-
---
 -- Table structure for table `student`
 --
 
@@ -302,13 +280,6 @@ ALTER TABLE `period`
   ADD PRIMARY KEY (`period_id`);
 
 --
--- Indexes for table `result`
---
-ALTER TABLE `result`
-  ADD PRIMARY KEY (`st_id`,`sub_id`),
-  ADD KEY `sub_id` (`sub_id`);
-
---
 -- Indexes for table `student`
 --
 ALTER TABLE `student`
@@ -355,34 +326,7 @@ ALTER TABLE `period`
 --
 ALTER TABLE `attempt_marks`
   ADD CONSTRAINT `attempt_marks_ibfk_1` FOREIGN KEY (`st_id`) REFERENCES `student` (`st_id`),
-  ADD CONSTRAINT `attempt_marks_ibfk_2` FOREIGN KEY (`sub_Id`) REFERENCES `subject` (`sub_id`);
-
---
--- Constraints for table `result`
---
-ALTER TABLE `result`
-  ADD CONSTRAINT `result_ibfk_1` FOREIGN KEY (`st_id`) REFERENCES `student` (`st_id`),
-  ADD CONSTRAINT `result_ibfk_2` FOREIGN KEY (`sub_id`) REFERENCES `subject` (`sub_id`);
-
---
--- Constraints for table `student`
---
-ALTER TABLE `student`
-  ADD CONSTRAINT `student_ibfk_1` FOREIGN KEY (`st_dep`) REFERENCES `department` (`dep_id`);
-
---
--- Constraints for table `subject`
---
-ALTER TABLE `subject`
-  ADD CONSTRAINT `subject_ibfk_1` FOREIGN KEY (`dep_id`) REFERENCES `department` (`dep_id`),
-  ADD CONSTRAINT `subject_ibfk_2` FOREIGN KEY (`per_id`) REFERENCES `period` (`period_id`);
-
---
--- Constraints for table `subject_lecture`
---
-ALTER TABLE `subject_lecture`
-  ADD CONSTRAINT `subject_lecture_ibfk_1` FOREIGN KEY (`sub_id`) REFERENCES `subject` (`sub_id`),
-  ADD CONSTRAINT `subject_lecture_ibfk_2` FOREIGN KEY (`lec_id`) REFERENCES `lecture` (`lec_id`);
+  ADD CONSTRAINT `attempt_marks_ibfk_2` FOREIGN KEY (`sub_id`) REFERENCES `subject` (`sub_id`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

@@ -46,7 +46,7 @@ $resultAllSub = $stmtAllSub->get_result();
 // Logout logic
 if (isset($_POST['logout'])) {
     session_destroy();
-    header("Location: index1.php"); // Redirect to login page
+    header("Location: index.php"); // Redirect to login page
     exit;
 }
 ?>
